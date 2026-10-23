@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Undefined</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Search</title>
+  <style>
+    body {
+      background: #fef9ce;
+      font-family: sans-serif;
+      padding: 13px;
+      margin: 0
+    }
+
+    .box {
+      max-width: 450px;
+      margin: 15px auto;
+      background: white;
+      padding: 15px;
+      border-radius: 15px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1)
+    }
+
+    .box input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 26px;
+      border: 3px solid #ccc;
+      box-sizing: border-box;
+      font-size: 17px
+    }
+
+    #btnSearch {
+      flex: 1;
+      padding: 12px;
+      border-radius: 20px;
+      border: none;
+      background: #00BFFF;
+      color: white;
+      font-weight: 469;
+      cursor: pointer
+    }
+
+    #btnClear {
+      padding: 12px 20px;
+      border-radius: 20px;
+      border: none;
+      background: red;
+      color: white;
+      cursor: pointer
+    }
+
+    #movies {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      max-width: 900px;
+      margin: 0 auto
+    }
+
+    .card {
+      background: #0000cd;
+      color: white;
+      border-radius: 29px;
+      overflow: hidden;
+      padding-bottom: 8px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover
+    }
+
+    #detail {
+      background: #222;
+      color: white;
+      border-radius: 12px;
+      padding: 15px;
+      max-width: 600px;
+      margin: 15px auto;
+      display: none;
+      position: relative
+    }
+
+    #detail img {
+      border-radius: 8px
+    }
+  </style>
+</head>
+
+<body>
+  <h1 style="text-align:center">Movie<span style="color:#89cff0">Search</span></h1>
+  <div class="box">
+    <input id="q" type="text" placeholder="Search Movies or Anime..." value="">
+    <div style="display:flex;gap:10px;margin-top:5px">
+      <button type="button" id="btnSearch">Search</button>
+      <button type="button" id="btnClear">Clear</button>
+    </div>
+  </div>
+  <div id="info" style="text-align:center;color:#888;margin:10px"></div>
+  <div id="movies"></div>
+  <div id="detail"></div>
+  <script>
+    var KEY = "thewdb";
+
+    function cari() {
+      var query = document.getElementById("q").value.trim();
+      var info = document.getElementById("info");
+      var list = document.getElementById("movies");
+      info.innerHTML = "Loading...";
+      var url = "https://www.omdbapi.com/?apikey=" + KEY + "&s=" + encodeURIComponent(query);
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", url, true);
+      xhr.onload = function() {
+        var data = JSON.parse(xhr.responseText);
+        if (data.Response === "False") {
+          info.innerHTML = data.Error;
+          list.innerHTML = "";
+          return;
+        }
+        info.innerHTML = "Found " + data.Search.length + " film";
+        var html = "";
+        for (var i = 0; i < data.Search.length; i++) {
+          var f = data.Search[i];
+          var poster = f.Poster;
+          if (poster === "N/A") {
+            poster = "https://via.placeholder.com/300x400?text=No+Image";
+          }
+          html += '<div class="card" data-id="' + f.imdbID + '"><img src="' + poster + '"><p>' + f.Title + '</p><small>' + f.Year + '</small></div>';
+        }
+        list.innerHTML = html;
+        var cards = document.querySelectorAll(".card");
+        for (var j = 0; j < cards.length; j++) {
+          cards[j].onclick = function() {
+            detailFilm(this.getAttribute("data-id"));
+          };
+        }
+      };
+      xhr.onerror = function() {
+        info.innerHTML = "Gagal menyambung internet";
+      };
+      xhr.send();
+    }
+
+    function detailFilm(id) {
+      id = id.trim();
+      var det = document.getElementById("detail");
+      det.style.display = "block";
+      det.innerHTML = "Loading detail..";
+      det.scrollIntoView({
+        behavior: "smooth"
+      });
+      var url = "https://www.omdbapi.com/?apikey=" + KEY + "&i=" + encodeURIComponent(id) + "&plot=full";
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", url, true);
+      xhr.onload = function() {
+        var f = JSON.parse(xhr.responseText);
+        if (f.Response === "False") {
+          det.innerHTML = f.Error;
+          return;
+        }
+        var youtubeTrailer = "https://www.youtube.com/search?query=" + encodeURIComponent(f.Title + " " + f.Year + "official trailer");
+        var justWatch = "https://www.justwatch.com/id/search?q=" + encodeURIComponent(f.Title);
+        var poster = f.Poster;
+        if (poster === "N/A") {
+          poster = "https://via.placeholder.com/300x400?text=No+Image";
+        }
+        det.innerHTML =
+          '<div style="display:flex;gap:12px">' +
+          '<img src="' + poster + '" style="width:110px;height:160px;object-fit:cover">' +
+          '<div><h3 style="margin:0">' + f.Title + ' (' + f.Year + ')</h3><p style="margin:5px 0;color:#ccc;font-size:14px">' + f.Genre + ' | ' + f.Runtime + '</p><p style="margin:5px 0">⭐ Rating: ' + f.imdbRating + '</p></div>' +
+          '</div>' +
+          '<p style="margin-top:12px;line-height:1.5">' + f.Plot + '</p>' +
+          '<div style="display:flex;gap:8px;margin-top:15px">' +
+          '<a href="' + youtubeTrailer + '" target="_blank" style="flex:1;padding:12px;background:#e50914;color:white;text-align:center;border-radius:20px;text-decoration:none;font-weight:bold">Trailer Youtube</a>' +
+          '<a href="' + justWatch + '" target="_blank" style="flex:1;padding:12px;background:#00baff;color:white;text-align:center;border-radius:20px;text-decoration:none;font-weight:bold">Cek Legal</a>' +
+          '</div>' +
+          '<button type="button" id="closeBtn" style="margin-top:10px;width:100%;padding:10px;border-radius:20px;border:none;background:#ff0000;color:#fff;">Tutup</button>';
+        document.getElementById("closeBtn").onclick = function() {
+          det.style.display = "none";
+        };
+      };
+      xhr.send();
+    }
+
+    function clearAll() {
+      document.getElementById("q").value = "";
+      document.getElementById("movies").innerHTML = "";
+      document.getElementById("info").innerHTML = "Dibersihkan";
+      document.getElementById("detail").style.display = "none";
+      document.getElementById("q").focus();
+    }
+    window.onload = function() {
+      document.getElementById("btnSearch").onclick = cari;
+      document.getElementById("btnClear").onclick = clearAll;
+      document.getElementById("q").onkeypress = function(e) {
+        if (e.key === "Enter") {
+          cari();
+        }
+      };
+    };
+  </script>
+</body>
+
+</html>
+    
+  </body>
+  
+</html>
